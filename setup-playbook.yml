@@ -5,6 +5,6 @@
   tasks:
      - name: Create a New User
        ansible.builtin.user:
-          name: teste
+          name: Estopa
           state: present
           create_home: true
