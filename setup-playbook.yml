@@ -1,6 +1,6 @@
 ---
 - name: Basic System Setup
-  hosts: aap
+  hosts: aap.lab.local
   become: true
   tasks:
      - name: Create a New User
