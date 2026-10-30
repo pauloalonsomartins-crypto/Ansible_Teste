@@ -7,4 +7,4 @@
        ansible.builtin.user:
           name: teste
           state: present
-          reate_home: true
+          create_home: true
