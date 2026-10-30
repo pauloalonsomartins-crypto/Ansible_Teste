@@ -4,7 +4,7 @@
   become: true
   tasks:
      - name: Create a New User
-       ansible.builtin.user:
-        name: teste
-        state: present
-        create_home: true
+         ansible.builtin.user:
+            name: teste
+            state: present
+            reate_home: true
