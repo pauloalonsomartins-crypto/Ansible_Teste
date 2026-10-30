@@ -1,6 +1,6 @@
 ---
 - name: Basic System Setup
-  hosts: localhost
+  hosts: aap
   become: true
   tasks:
      - name: Create a New User
