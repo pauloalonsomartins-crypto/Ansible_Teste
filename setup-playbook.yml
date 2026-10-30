@@ -1,1 +1,10 @@
-
+---
+- name: Basic System Setup
+  hosts: app.lab.local
+  become: true
+  tasks:
+     - name: Create a New User
+      ansible.builtin.user:
+        name: teste
+        state: present
+        create_home: true
