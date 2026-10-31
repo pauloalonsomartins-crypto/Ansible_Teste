@@ -1,22 +1,23 @@
 ---
-- name: Coletar configuração via console
-  hosts: all
+- name: Configure Cisco IOU Lab Instances
+  hosts: Prisma
   gather_facts: false
-  connection: local
 
   tasks:
-    - name: Console direta
-      ansible.netcommon.telnet:
-        host: "{{ ansible_host }}"
-        port: 2001
-        send_newline: true
-        prompts:
-          - "[>#]"
-        command:
-          - terminal length 0
-          - show running-config
-      register: saida
+    - name: Gather facts from IOU Cisco device
+      cisco.ios.ios_facts:
+        gather_subset: min
 
-    - name: Mostrar saída
-      ansible.builtin.debug:
-        var: saida.output
+    - name: Configure Hostname on IOU instance
+      cisco.ios.ios_hostname:
+        config:
+          hostname: "{{ inventory_hostname }}"
+        state: merged
+
+    - name: Deploy Standard Interface Configurations
+      cisco.ios.ios_interfaces:
+        config:
+          - name: Ethernet0/0
+            description: "Configured via Ansible Network Automation"
+            enabled: true
+        state: merged
