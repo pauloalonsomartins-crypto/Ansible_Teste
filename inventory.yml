@@ -1,0 +1,73 @@
+# This is the Ansible Automation Platform installer inventory file intended for the container growth deployment topology.
+# This inventory file expects to be run from the host where Ansible Automation Platform will be installed.
+# Consult the Ansible Automation Platform product documentation about this topology's tested hardware configuration.
+#
+# Consult the docs if you are unsure what to add
+# For all optional variables consult the included README.md
+# or the Ansible Automation Platform documentation
+
+# This section is for your platform gateway hosts
+# -----------------------------------------------------
+[automationgateway]
+aap.lab.local
+
+# This section is for your automation controller hosts
+# -----------------------------------------------------
+[automationcontroller]
+aap.lab.local
+
+# This section is for your automation hub hosts
+# -----------------------------------------------------
+[automationhub]
+aap.lab.local
+
+# This section is for your Event-Driven Ansible controller hosts
+# -----------------------------------------------------
+[automationeda]
+aap.lab.local
+
+# This section is for the Ansible Automation Platform database
+# -----------------------------------------------------
+[database]
+aap.lab.local
+
+[all:vars]
+
+# Ansible
+localhost_connection=aap.lab.local
+
+# Common variables
+# -----------------------------------------------------
+postgresql_admin_username=postgres
+postgresql_admin_password=<set your own>
+
+registry_username=p.martins@external.t-systems.com
+registry_password=Secrel*Cisco10
+
+redis_mode=standalone
+
+# Platform gateway
+# -----------------------------------------------------
+gateway_admin_password=secrel
+gateway_pg_host=aap.lab.local
+gateway_pg_password=secrel
+
+# Automation controller
+# -----------------------------------------------------
+controller_admin_password=secrel
+controller_pg_host=aap.lab.local
+controller_pg_password=secrel
+controller_percent_memory_capacity=0.5
+
+# Automation hub
+# -----------------------------------------------------
+hub_admin_password=secrel
+hub_pg_host=aap.lab.local
+hub_pg_password=secrel
+hub_seed_collections=false
+
+# Event-Driven Ansible controller
+# -----------------------------------------------------
+eda_admin_password=secrel
+eda_pg_host=aap.lab.local
+eda_pg_password=secrel
