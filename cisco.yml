@@ -6,7 +6,7 @@
 
   vars:
     console_port: 2001
-    console_login_prompt: "Prisma>"
+    console_login_prompt: "PRISMA>"
 
   tasks:
     - name: Gather info from IOU Cisco device
