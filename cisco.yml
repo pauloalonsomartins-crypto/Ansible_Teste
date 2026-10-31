@@ -1,4 +1,11 @@
-- name: Console direta
+---
+- name: Coletar configuração via console
+  hosts: all
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Console direta
       ansible.netcommon.telnet:
         host: "{{ ansible_host }}"
         port: 2001
@@ -9,3 +16,7 @@
           - terminal length 0
           - show running-config
       register: saida
+
+    - name: Mostrar saída
+      ansible.builtin.debug:
+        var: saida.output
