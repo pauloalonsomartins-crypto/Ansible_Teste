@@ -1,23 +1,53 @@
 ---
-- name: Configure Cisco IOU Lab Instances
+- name: Configure Cisco IOU Lab Instances via Telnet
   hosts: Prisma
   gather_facts: false
+  connection: local
+
+  vars:
+    console_port: 2001
+    console_login_prompt: ">"
 
   tasks:
-    - name: Gather facts from IOU Cisco device
-      cisco.ios.ios_facts:
-        gather_subset: min
+    - name: Gather info from IOU Cisco device
+      ansible.netcommon.telnet:
+        host: "{{ ansible_host }}"
+        port: "{{ console_port }}"
+        send_newline: true
+        login_prompt: "{{ console_login_prompt }}"
+        user: ""
+        prompts:
+          - "[>#]"
+        command:
+          - enable
+          - terminal length 0
+          - show version
+      register: facts_saida
 
-    - name: Configure Hostname on IOU instance
-      cisco.ios.ios_hostname:
-        config:
-          hostname: "{{ inventory_hostname }}"
-        state: merged
+    - name: Show device info
+      ansible.builtin.debug:
+        var: facts_saida.output
 
-    - name: Deploy Standard Interface Configurations
-      cisco.ios.ios_interfaces:
-        config:
-          - name: Ethernet0/0
-            description: "Configured via Ansible Network Automation"
-            enabled: true
-        state: merged
+    - name: Configure hostname and interface
+      ansible.netcommon.telnet:
+        host: "{{ ansible_host }}"
+        port: "{{ console_port }}"
+        send_newline: true
+        login_prompt: "{{ console_login_prompt }}"
+        user: ""
+        prompts:
+          - "[>#]"
+        command:
+          - enable
+          - configure terminal
+          - hostname {{ inventory_hostname }}
+          - interface Ethernet0/0
+          - description Configured via Ansible Network Automation
+          - no shutdown
+          - end
+          - write memory
+      register: config_saida
+
+    - name: Show configuration output
+      ansible.builtin.debug:
+        var: config_saida.output
