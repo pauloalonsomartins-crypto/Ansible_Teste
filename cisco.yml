@@ -1,0 +1,11 @@
+- name: Console direta
+      ansible.netcommon.telnet:
+        host: "{{ ansible_host }}"
+        port: 2001
+        send_newline: true
+        prompts:
+          - "[>#]"
+        command:
+          - terminal length 0
+          - show running-config
+      register: saida
