@@ -1,53 +1,26 @@
 ---
-- name: Configure Cisco IOU Lab Instances via Telnet
-  hosts: Prisma
-  gather_facts: false
-  connection: local
-
-  vars:
-    console_port: 2001
-    console_login_prompt: "PRISMA>"
+- name: Verificar status de equipamentos Cisco IOS
+  hosts: cisco_routers
+  gather_facts: no
+  connection: ansible.builtin.network_cli
 
   tasks:
-    - name: Gather info from IOU Cisco device
-      ansible.netcommon.telnet:
-        host: "{{ ansible_host }}"
-        port: "{{ console_port }}"
-        send_newline: true
-        login_prompt: "{{ console_login_prompt }}"
-        user: ""
-        prompts:
-          - "[>#]"
-        command:
-          - enable
-          - terminal length 0
+    - name: Coletar resumo das interfaces
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+      register: int_brief
+
+    - name: Coletar versão e informações do hardware
+      cisco.ios.ios_command:
+        commands:
           - show version
-      register: facts_saida
+      register: ver_info
 
-    - name: Show device info
+    - name: Exibir status das interfaces na tela
       ansible.builtin.debug:
-        var: facts_saida.output
+        msg: "{{ int_brief.stdout_lines[0] }}"
 
-    - name: Configure hostname and interface
-      ansible.netcommon.telnet:
-        host: "{{ ansible_host }}"
-        port: "{{ console_port }}"
-        send_newline: true
-        login_prompt: "{{ console_login_prompt }}"
-        user: ""
-        prompts:
-          - "[>#]"
-        command:
-          - enable
-          - configure terminal
-          - hostname {{ inventory_hostname }}
-          - interface Ethernet0/0
-          - description Configured via Ansible Network Automation
-          - no shutdown
-          - end
-          - write memory
-      register: config_saida
-
-    - name: Show configuration output
+    - name: Exibir versão do IOS na tela
       ansible.builtin.debug:
-        var: config_saida.output
+        msg: "{{ ver_info.stdout_lines[0] }}"
