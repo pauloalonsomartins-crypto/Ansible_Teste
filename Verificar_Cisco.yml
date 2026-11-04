@@ -69,4 +69,3 @@
     - name: Informar onde os arquivos foram salvos
       ansible.builtin.debug:
         msg: "Arquivos salvos em {{ pasta_backup }}/{{ inventory_hostname }}_{{ data_hora }}*"
-:wq
