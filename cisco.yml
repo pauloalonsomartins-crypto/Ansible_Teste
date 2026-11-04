@@ -20,7 +20,7 @@
     - name: Coletar a configuração do equipamento
       cisco.ios.ios_command:
         commands:
-          - show run
+          - show running
         register: show_run
 
     - name: Exibir status das interfaces na tela
