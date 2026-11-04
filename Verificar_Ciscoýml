@@ -1,0 +1,70 @@
+---
+- name: Verificar status e fazer backup de equipamentos Cisco IOS
+  hosts: Cisco_Switch
+  gather_facts: no
+  connection: ansible.builtin.network_cli
+
+  vars:
+    # Remova esta linha se ansible_network_os já estiver no inventário
+    ansible_network_os: cisco.ios.ios
+    pasta_backup: "{{ playbook_dir }}/backups"
+
+  tasks:
+    - name: Definir data e hora da execução
+      ansible.builtin.set_fact:
+        data_hora: "{{ lookup('ansible.builtin.pipe', 'date +%Y-%m-%d_%H-%M') }}"
+      run_once: true
+
+    - name: Coletar informações do equipamento
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+          - show version
+          - show running-config
+      register: saida
+
+    # ---------- Exibição na tela ----------
+
+    - name: Exibir status das interfaces
+      ansible.builtin.debug:
+        msg: "{{ saida.stdout_lines[0] }}"
+
+    - name: Exibir versão do IOS
+      ansible.builtin.debug:
+        msg: "{{ saida.stdout_lines[1] }}"
+
+    # ---------- Gravação em arquivo ----------
+
+    - name: Garantir que a pasta de backups existe
+      ansible.builtin.file:
+        path: "{{ pasta_backup }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Salvar a configuração (running-config)
+      ansible.builtin.copy:
+        content: "{{ saida.stdout[2] }}\n"
+        dest: "{{ pasta_backup }}/{{ inventory_hostname }}_{{ data_hora }}.cfg"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Salvar relatório de interfaces e versão
+      ansible.builtin.copy:
+        content: |
+          Equipamento: {{ inventory_hostname }}
+          Data da coleta: {{ data_hora }}
+
+          ===== show ip interface brief =====
+          {{ saida.stdout[0] }}
+
+          ===== show version =====
+          {{ saida.stdout[1] }}
+        dest: "{{ pasta_backup }}/{{ inventory_hostname }}_{{ data_hora }}_relatorio.txt"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Informar onde os arquivos foram salvos
+      ansible.builtin.debug:
+        msg: "Arquivos salvos em {{ pasta_backup }}/{{ inventory_hostname }}_{{ data_hora }}*"
