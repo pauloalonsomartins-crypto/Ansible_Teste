@@ -40,7 +40,7 @@
         path: "{{ pasta_backup }}"
         state: directory
         mode: "0755"
-      delegate_to: localhost
+      delegate_to: aap.lab.local
       run_once: true
 
     - name: Salvar a configuração (running-config)
@@ -48,7 +48,7 @@
         content: "{{ saida.stdout[2] }}\n"
         dest: "{{ pasta_backup }}/{{ inventory_hostname }}_{{ data_hora }}.cfg"
         mode: "0644"
-      delegate_to: localhost
+      delegate_to: aap.lab.local
 
     - name: Salvar relatório de interfaces e versão
       ansible.builtin.copy:
