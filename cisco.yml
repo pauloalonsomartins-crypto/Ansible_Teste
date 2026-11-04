@@ -21,7 +21,7 @@
       cisco.ios.ios_command:
         commands:
           - show running
-        register: show_run
+      register: show_run
 
     - name: Exibir status das interfaces na tela
       ansible.builtin.debug:
