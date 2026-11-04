@@ -7,7 +7,8 @@
   vars:
     # Remova esta linha se ansible_network_os já estiver no inventário
     ansible_network_os: cisco.ios.ios
-    pasta_backup: "{{ playbook_dir }}/backups"
+    pasta_backup: /opt/backups/rede
+    servidor_backup: aap.lab.local   # nome do host no inventário do AWX
 
   tasks:
     - name: Definir data e hora da execução
