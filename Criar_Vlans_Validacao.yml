@@ -1,0 +1,141 @@
+---
+- name: Criar VLANs em equipamentos Cisco IOS
+  hosts: Cisco_Switch
+  gather_facts: no
+  connection: ansible.builtin.network_cli
+
+  vars:
+    # Remova esta linha se ansible_network_os já estiver no inventário
+    ansible_network_os: cisco.ios.ios
+
+    # Lista padrão, usada quando NÃO vier vlan_id pelo survey.
+    # Pode ser sobrescrita em "Variables" (extra vars) no template do AAP.
+    vlans_lista:
+      - { vlan_id: 10, nome: "ADMINISTRATIVO" }
+      - { vlan_id: 20, nome: "FINANCEIRO" }
+
+    # false = avisa sobre as VLANs existentes e cria só as novas
+    # true  = se QUALQUER VLAN já existir, para o job sem alterar nada
+    abortar_se_existir: false
+
+  tasks:
+    # ---------- Montar a lista final ----------
+
+    - name: Usar a VLAN informada no survey (se houver)
+      ansible.builtin.set_fact:
+        vlans_final:
+          - vlan_id: "{{ vlan_id | int }}"
+            nome: "{{ vlan_nome | default('VLAN' ~ vlan_id, true) }}"
+      when: vlan_id is defined and vlan_id | string | length > 0
+
+    - name: Usar a lista de VLANs (quando não há survey)
+      ansible.builtin.set_fact:
+        vlans_final: "{{ vlans_lista }}"
+      when: vlans_final is not defined
+
+    # ---------- Validações ----------
+
+    - name: Validar IDs e nomes das VLANs
+      ansible.builtin.assert:
+        that:
+          - item.vlan_id | int >= 2
+          - item.vlan_id | int <= 4094
+          - item.vlan_id | int not in [1002, 1003, 1004, 1005]
+          - item.nome | length <= 32
+          - "' ' not in item.nome"
+        fail_msg: >-
+          VLAN {{ item.vlan_id }} inválida: o ID deve estar entre 2 e 4094
+          (exceto 1002-1005) e o nome deve ter até 32 caracteres, sem espaços.
+        quiet: true
+      loop: "{{ vlans_final }}"
+      loop_control:
+        label: "VLAN {{ item.vlan_id }}"
+
+    # ---------- Verificar o que já existe no switch ----------
+
+    - name: Ler as VLANs atuais do switch
+      cisco.ios.ios_vlans:
+        state: gathered
+      register: vlans_atuais
+
+    - name: Separar VLANs existentes e novas
+      ansible.builtin.set_fact:
+        ids_no_switch: "{{ vlans_atuais.gathered | default([]) | map(attribute='vlan_id') | map('int') | list }}"
+
+    - name: Montar listas de VLANs existentes e novas
+      ansible.builtin.set_fact:
+        vlans_existentes: "{{ vlans_final | selectattr('vlan_id', 'in', ids_no_switch) | list
+                              + vlans_final | selectattr('vlan_id', 'in', ids_no_switch | map('string') | list) | list }}"
+        vlans_novas: "{{ vlans_final | rejectattr('vlan_id', 'in', ids_no_switch)
+                         | rejectattr('vlan_id', 'in', ids_no_switch | map('string') | list) | list }}"
+
+    - name: "AVISO - VLAN já existe no switch (não será alterada)"
+      ansible.builtin.debug:
+        msg: >-
+          ATENÇÃO: a VLAN {{ item.vlan_id }} já existe no switch com o nome
+          '{{ vlans_atuais.gathered | selectattr('vlan_id', 'equalto', item.vlan_id | int)
+              | map(attribute='name') | first | default('sem nome') }}'.
+          Nenhuma alteração foi feita nela.
+      loop: "{{ vlans_existentes }}"
+      loop_control:
+        label: "VLAN {{ item.vlan_id }}"
+
+    - name: Interromper se alguma VLAN já existir (modo abortar_se_existir)
+      ansible.builtin.fail:
+        msg: >-
+          Job interrompido: as VLANs {{ vlans_existentes | map(attribute='vlan_id') | join(', ') }}
+          já existem no switch. Nenhuma alteração foi feita.
+      when:
+        - abortar_se_existir | bool
+        - vlans_existentes | length > 0
+
+    - name: Nada a criar
+      ansible.builtin.debug:
+        msg: "Todas as VLANs informadas já existem. Nenhuma alteração foi feita no switch."
+      when: vlans_novas | length == 0
+
+    # ---------- Criação (somente das VLANs novas) ----------
+
+    - name: Converter as VLANs novas para o formato do módulo ios_vlans
+      ansible.builtin.set_fact:
+        config_vlans: >-
+          {{ config_vlans | default([]) + [{
+               'vlan_id': item.vlan_id | int,
+               'name': item.nome,
+               'state': 'active',
+               'shutdown': 'disabled'
+             }] }}
+      loop: "{{ vlans_novas }}"
+      loop_control:
+        label: "VLAN {{ item.vlan_id }}"
+
+    - name: Criar as VLANs novas
+      cisco.ios.ios_vlans:
+        config: "{{ config_vlans }}"
+        state: merged
+      register: resultado_vlans
+      when: vlans_novas | length > 0
+
+    - name: Mostrar os comandos enviados ao switch
+      ansible.builtin.debug:
+        msg: "{{ resultado_vlans.commands }}"
+      when: resultado_vlans.commands is defined
+
+    # ---------- Salvar e conferir ----------
+
+    - name: Salvar a configuração (somente se houve mudança)
+      cisco.ios.ios_config:
+        save_when: modified
+      when:
+        - resultado_vlans is changed
+        - not ansible_check_mode
+
+    - name: Conferir as VLANs no switch
+      cisco.ios.ios_command:
+        commands:
+          - show vlan brief
+      register: vlan_brief
+
+    - name: Exibir show vlan brief
+      ansible.builtin.debug:
+        msg: "{{ vlan_brief.stdout_lines[0] }}"
