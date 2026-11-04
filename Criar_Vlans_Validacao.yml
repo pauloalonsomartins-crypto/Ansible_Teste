@@ -11,8 +11,8 @@
     # Lista padrão, usada quando NÃO vier vlan_id pelo survey.
     # Pode ser sobrescrita em "Variables" (extra vars) no template do AAP.
     vlans_lista:
-      - { vlan_id: 10, nome: "ADMINISTRATIVO" }
-      - { vlan_id: 20, nome: "FINANCEIRO" }
+      - { vlan_id: 10, nome: "TESTE10" }
+      - { vlan_id: 20, nome: "TESTE20" }
 
     # false = avisa sobre as VLANs existentes e cria só as novas
     # true  = se QUALQUER VLAN já existir, para o job sem alterar nada
