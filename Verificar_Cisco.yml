@@ -1,6 +1,6 @@
 ---
 - name: Verificar status e fazer backup de equipamentos Cisco IOS
-  hosts: aap.lab.local
+  hosts: cisco_switch
   gather_facts: no
   connection: ansible.builtin.network_cli
 
