@@ -1,6 +1,6 @@
 ---
 - name: Verificar status de equipamentos Cisco IOS
-  hosts: Cisco_Switch
+  hosts: cisco_switch
   gather_facts: no
   connection: ansible.builtin.network_cli
   
