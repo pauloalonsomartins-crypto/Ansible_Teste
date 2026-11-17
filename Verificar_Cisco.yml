@@ -42,7 +42,7 @@
         state: directory
         mode: "0755"
       delegate_to: aap.lab.local
-        run_once: true
+      run_once: true
 
     - name: Salvar a configuração (running-config)
       ansible.builtin.copy:
