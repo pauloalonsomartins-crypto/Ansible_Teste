@@ -36,13 +36,13 @@
 
     # ---------- Gravação em arquivo ----------
 
-#    - name: Garantir que a pasta de backups existe
-#      ansible.builtin.file:
-#        path: "{{ pasta_backup }}"
-#        state: directory
-#        mode: "0755"
-#      delegate_to: aap.lab.local
-#       run_once: true
+    - name: Garantir que a pasta de backups existe
+      ansible.builtin.file:
+        path: "{{ pasta_backup }}"
+        state: directory
+        mode: "0755"
+      delegate_to: aap.lab.local
+        run_once: true
 
     - name: Salvar a configuração (running-config)
       ansible.builtin.copy:
