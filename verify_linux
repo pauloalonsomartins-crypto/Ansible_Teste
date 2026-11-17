@@ -1,0 +1,41 @@
+---
+- name: Verify Linux System Information and State
+  hosts: AWX
+  gather_facts: true
+  become: false
+
+  tasks:
+    - name: Display core OS and hardware facts
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ ansible_hostname }}"
+          - "OS Distribution: {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_os_family }})"
+          - "Kernel Version: {{ ansible_kernel }}"
+          - "Architecture: {{ ansible_architecture }}"
+          - "vCPUs: {{ ansible_processor_vcpus }}"
+          - "Total Memory (MB): {{ ansible_memtotal_mb }}"
+          - "Default IPv4: {{ ansible_default_ipv4.address | default('N/A') }}"
+
+    - name: Validate minimum system requirements
+      ansible.builtin.assert:
+        that:
+          - ansible_system == "Linux"
+          - ansible_memtotal_mb >= 1024
+        fail_msg: "System does not meet minimum Linux or RAM requirements."
+        success_msg: "System meets baseline Linux and RAM requirements."
+
+    - name: Check critical configuration file status
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config
+      register: sshd_file
+
+    - name: Report SSH config existence and permissions
+      ansible.builtin.debug:
+        msg: "sshd_config exists: {{ sshd_file.stat.exists }} (Mode: {{ sshd_file.stat.mode | default('N/A') }})"
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Check if SSH service is running
+      ansible.builtin.debug:
+        msg: "SSH Service State: {{ ansible_facts.services['ssh.service'].state | default(ansible_facts.services['sshd.service'].state | default('Not Found')) }}"
