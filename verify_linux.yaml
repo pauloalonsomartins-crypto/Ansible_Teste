@@ -1,6 +1,6 @@
 ---
 - name: Verify Linux System Information and State
-  hosts: aap.lab.local
+  hosts: AWX_operator
   gather_facts: true
   become: false
 
